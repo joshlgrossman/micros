@@ -1,1 +1,1 @@
-export { InjectionToken } from "tsyringe";
+export { InjectionToken } from 'tsyringe';

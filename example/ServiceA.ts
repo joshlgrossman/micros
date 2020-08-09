@@ -1,8 +1,9 @@
-import * as op from "rxjs/operators";
-import { Service, Effect, MessageBroker, Started, Version } from "../src/core";
-import { Inject } from "../src/di";
-import * as actions from "./actions";
-import { ServiceB } from "./ServiceB";
+import * as op from 'rxjs/operators';
+import { Service, Effect, MessageBroker, Started, Version } from '../src/core';
+import { Inject } from '../src/di';
+import * as actions from './actions';
+import { ServiceB } from './ServiceB';
+import { LOGGER } from './logger';
 
 @Service()
 @Version(1)
@@ -25,14 +26,16 @@ export class ServiceA implements Started {
 
   constructor(
     @Inject(MessageBroker) private readonly broker: MessageBroker<actions.All>,
-    @Inject(ServiceB) private readonly serviceB: ServiceB
+    @Inject(ServiceB) private readonly serviceB: ServiceB,
+    @Inject(LOGGER) private readonly logger: Console
   ) {}
 
   public async started(): Promise<void> {
-    console.log("started");
+    this.logger.log('started');
     setTimeout(async () => {
-      const result = await this.serviceB.test("hello", "world");
-      console.log("result is ", result);
+      const result = await this.serviceB.test('hello', 'world');
+      const result2 = await this.serviceB.test2(123);
+      this.logger.log('result is ', result + result2);
     }, 1000);
   }
 }

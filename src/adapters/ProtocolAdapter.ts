@@ -1,5 +1,5 @@
-import { Action } from "../core";
-import { Observable } from "rxjs";
+import { Action } from '../core';
+import { Observable } from 'rxjs';
 
 export interface ProtocolAdapter {
   connect(): Promise<any>;

@@ -1,4 +1,4 @@
-import { InternalClassDecorator, VERSION_METADATA_KEY } from "../internal";
+import { InternalClassDecorator, VERSION_METADATA_KEY } from '../internal';
 
 export function Version(version: number | string): InternalClassDecorator<any> {
   return (target) => {

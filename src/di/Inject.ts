@@ -1,1 +1,1 @@
-export { inject as Inject } from "tsyringe";
+export { inject as Inject } from 'tsyringe';

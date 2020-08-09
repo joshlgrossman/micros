@@ -1,9 +1,9 @@
-import { Observable } from "rxjs";
-import { ProtocolAdapter } from "./ProtocolAdapter";
-import { Injectable, Inject, Singleton } from "../di";
-import { NATS_PROTOCOL, nats } from "../protocols";
-import { Action } from "../core";
-import { Protocol } from "./Protocol";
+import { Observable } from 'rxjs';
+import { ProtocolAdapter } from './ProtocolAdapter';
+import { Inject, Singleton } from '../di';
+import { NATS_PROTOCOL, nats } from '../protocols';
+import { Action } from '../core';
+import { Protocol } from './Protocol';
 
 @Singleton()
 export class NatsProtocolAdapter implements ProtocolAdapter {
@@ -15,7 +15,7 @@ export class NatsProtocolAdapter implements ProtocolAdapter {
   public async connect(): Promise<void> {
     this.connection = this.protocol.connect({
       json: true,
-      url: "nats://localhost:4222",
+      url: 'nats://localhost:4222',
     });
   }
 
@@ -30,10 +30,14 @@ export class NatsProtocolAdapter implements ProtocolAdapter {
   }
 
   public respond(method: string, cb: (...args: any[]) => Promise<any>): void {
-    this.connection.subscribe(method, async (args: any[], replyTo: string) => {
-      const response = await cb(...args);
-      this.connection.publish(replyTo, response);
-    });
+    this.connection.subscribe(
+      method,
+      { queue: method },
+      async (args: any[], replyTo: string) => {
+        const response = await cb(...args);
+        this.connection.publish(replyTo, response);
+      }
+    );
   }
 
   public async publish(action: Action): Promise<void> {

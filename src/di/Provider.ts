@@ -1,5 +1,5 @@
-import { Constructor } from "../internal";
-import { InjectionToken } from "./InjectionToken";
+import { Constructor } from '../internal';
+import { InjectionToken } from './InjectionToken';
 
 export type Provider<T> =
   | Constructor<T>

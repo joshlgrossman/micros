@@ -1,6 +1,6 @@
-import { Observable } from "rxjs";
-import { Action } from "./Action";
-import { EFFECT_METADATA_KEY } from "../internal";
+import { Observable } from 'rxjs';
+import { Action } from './Action';
+import { EFFECT_METADATA_KEY } from '../internal';
 
 export function Effect(): <
   P extends string,

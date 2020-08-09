@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "ES2015",
     "module": "commonjs",
-    "lib": ["ES2017"],
+    "moduleResolution": "node",
+    "lib": ["ES5", "ES2015", "ES2017"],
     "declaration": true,
     "removeComments": false,
     "stripInternal": true,
@@ -15,5 +16,6 @@
     "emitDecoratorMetadata": true,
     "outDir": "dist/",
     "rootDir": "."
-  }
+  },
+  "include": ["./src/**/*", "./test/**/*", "./example/**/*"]
 }

@@ -4,12 +4,22 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node ./test"
+    "dev": "ts-node ./example",
+    "format": "prettier --write '{src,example}/**/*.ts'",
+    "lint": "eslint ./src/**/*.ts",
+    "build": "tsc",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@typescript-eslint/parser": "^3.8.0",
+    "eslint": "^7.6.0",
+    "husky": "^4.2.5",
+    "jest": "^26.2.2",
+    "prettier": "^2.0.5",
+    "ts-jest": "^26.1.4",
     "typescript": "^3.9.7"
   },
   "dependencies": {

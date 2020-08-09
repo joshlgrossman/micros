@@ -1,1 +1,1 @@
-export { singleton as Singleton } from "tsyringe";
+export { singleton as Singleton } from 'tsyringe';

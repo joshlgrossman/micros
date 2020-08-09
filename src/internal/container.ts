@@ -1,1 +1,1 @@
-export { container } from "tsyringe";
+export { container } from 'tsyringe';

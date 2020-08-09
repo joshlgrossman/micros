@@ -1,4 +1,4 @@
-import { METHOD_METADATA_KEY } from "../internal";
+import { METHOD_METADATA_KEY } from '../internal';
 
 export function Method(): <
   P extends string,

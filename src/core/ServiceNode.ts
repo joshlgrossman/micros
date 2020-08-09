@@ -3,23 +3,23 @@ import {
   container,
   EFFECT_METADATA_KEY,
   SERVICE_METADATA_KEY,
-} from "../internal";
+} from '../internal';
 import {
   Provider,
   InjectionToken,
   DEPENDENCY_CONTAINER,
   Registry,
-} from "../di";
+} from '../di';
 import {
   Protocol,
   ProtocolAdapterFactory,
   PROTOCOL_ADAPTER,
-} from "../adapters";
-import { MessageBroker } from "./MessageBroker";
-import { Action } from "./Action";
-import { NATS_PROTOCOL } from "../protocols";
-import { RpcHandler } from "./RpcHandler";
-import * as nats from "nats";
+} from '../adapters';
+import { MessageBroker } from './MessageBroker';
+import { Action } from './Action';
+import { NATS_PROTOCOL } from '../protocols';
+import { RpcHandler } from './RpcHandler';
+import * as nats from 'nats';
 
 @Registry([
   {
@@ -54,6 +54,14 @@ export class ServiceNode {
     const protocolAdapter = protocolAdapterFactory.create(this.config.protocol);
 
     subContainer.register(PROTOCOL_ADAPTER, { useValue: protocolAdapter });
+
+    for (const provider of this.registry.providers ?? []) {
+      if (typeof provider === 'function') {
+        subContainer.register(provider, provider);
+      } else {
+        subContainer.register(provider.token, provider as any);
+      }
+    }
 
     await protocolAdapter.connect();
 

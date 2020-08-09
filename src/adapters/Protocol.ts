@@ -1,3 +1,3 @@
 export enum Protocol {
-  NATS = "NATS",
+  NATS = 'NATS',
 }

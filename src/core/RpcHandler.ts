@@ -1,6 +1,6 @@
-import { Inject, Injectable } from "../di";
-import { PROTOCOL_ADAPTER, ProtocolAdapter } from "../adapters";
-import { METHOD_METADATA_KEY, VERSION_METADATA_KEY } from "../internal";
+import { Inject, Injectable } from '../di';
+import { PROTOCOL_ADAPTER, ProtocolAdapter } from '../adapters';
+import { METHOD_METADATA_KEY, VERSION_METADATA_KEY } from '../internal';
 
 @Injectable()
 export class RpcHandler {

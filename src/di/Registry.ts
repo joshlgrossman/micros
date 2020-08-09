@@ -1,1 +1,1 @@
-export { registry as Registry } from "tsyringe";
+export { registry as Registry } from 'tsyringe';

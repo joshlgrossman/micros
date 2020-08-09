@@ -1,9 +1,9 @@
-import { InjectionToken, Injectable } from "../di";
+import { InjectionToken, Injectable } from '../di';
 import {
   container,
   InternalClassDecorator,
   SERVICE_METADATA_KEY,
-} from "../internal";
+} from '../internal';
 
 export function Service<T = any>(
   token?: InjectionToken<T>

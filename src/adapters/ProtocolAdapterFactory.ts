@@ -3,10 +3,10 @@ import {
   Inject,
   DEPENDENCY_CONTAINER,
   DependencyContainer,
-} from "../di";
-import { ProtocolAdapter } from "./ProtocolAdapter";
-import { Protocol } from "./Protocol";
-import { NatsProtocolAdapter } from "./NatsProtocolAdapter";
+} from '../di';
+import { ProtocolAdapter } from './ProtocolAdapter';
+import { Protocol } from './Protocol';
+import { NatsProtocolAdapter } from './NatsProtocolAdapter';
 
 @Injectable()
 export class ProtocolAdapterFactory {
