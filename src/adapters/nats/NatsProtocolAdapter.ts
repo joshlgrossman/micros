@@ -1,22 +1,24 @@
 import { Observable } from 'rxjs';
-import { ProtocolAdapter } from './ProtocolAdapter';
-import { Inject, Singleton } from '../di';
-import { NATS_PROTOCOL, nats } from '../protocols';
-import { Action } from '../core';
-import { Protocol } from './Protocol';
+import { ProtocolAdapter } from '../ProtocolAdapter';
+import { Inject, Singleton } from '../../di';
+import { NATS_PROTOCOL, nats } from '../../protocols';
+import { Action } from '../../core';
+import { NatsProtocolConfig } from './NatsProtocolConfig';
 
 @Singleton()
 export class NatsProtocolAdapter implements ProtocolAdapter {
-  public readonly type = Protocol.NATS;
   private connection!: nats.Client;
+  private config!: NatsProtocolConfig;
 
   constructor(@Inject(NATS_PROTOCOL) private readonly protocol: typeof nats) {}
 
+  public configure(config: NatsProtocolConfig): this {
+    this.config = config;
+    return this;
+  }
+
   public async connect(): Promise<void> {
-    this.connection = this.protocol.connect({
-      json: true,
-      url: 'nats://localhost:4222',
-    });
+    this.connection = this.protocol.connect(this.config);
   }
 
   public async disconnect(): Promise<void> {
@@ -25,11 +27,11 @@ export class NatsProtocolAdapter implements ProtocolAdapter {
 
   public async request(method: string, args: any[]): Promise<any> {
     return new Promise((res) =>
-      this.connection.requestOne(method, args, 5000, res)
+      this.connection.requestOne(method, args, this.config.timeout, res)
     );
   }
 
-  public respond(method: string, cb: (...args: any[]) => Promise<any>): void {
+  public reply(method: string, cb: (...args: any[]) => Promise<any>): void {
     this.connection.subscribe(
       method,
       { queue: method },
@@ -40,21 +42,23 @@ export class NatsProtocolAdapter implements ProtocolAdapter {
     );
   }
 
-  public async publish(action: Action): Promise<void> {
+  public async publish<T extends Action>(action: T): Promise<void> {
     const { type, ...data } = action;
-    return new Promise((res) =>
-      this.connection.publish(action.type, data, res)
-    );
+    return new Promise((res) => this.connection.publish(type, data, res));
   }
 
   public subscribe(type: string): Observable<Action> {
     return new Observable((subscriber) => {
-      this.connection.subscribe(type, (data: any) =>
+      const subscription = this.connection.subscribe(type, (data: any) =>
         subscriber.next({
           ...data,
           type,
         })
       );
+
+      return () => {
+        this.connection.unsubscribe(subscription);
+      };
     });
   }
 }

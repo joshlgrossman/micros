@@ -1,13 +1,21 @@
 import * as op from 'rxjs/operators';
-import { Service, Effect, MessageBroker, Started, Version } from '../src/core';
-import { Inject } from '../src/di';
-import * as actions from './actions';
-import { ServiceB } from './ServiceB';
-import { LOGGER } from './logger';
+import {
+  Service,
+  Effect,
+  MessageBroker,
+  Version,
+  Started,
+} from '../../src/core';
+import { Inject } from '../../src/di';
+import * as actions from '../actions';
+import { LOGGER } from '../logger';
+import { ServiceA } from './ServiceA';
+import { ServiceBImpl } from '../serviceB/ServiceBImpl';
+import { ServiceB } from '../serviceB/ServiceB';
 
 @Service()
 @Version(1)
-export class ServiceA implements Started {
+export class ServiceAImpl implements ServiceA, Started {
   private number = 10;
 
   @Effect()
@@ -26,7 +34,7 @@ export class ServiceA implements Started {
 
   constructor(
     @Inject(MessageBroker) private readonly broker: MessageBroker<actions.All>,
-    @Inject(ServiceB) private readonly serviceB: ServiceB,
+    @Inject(ServiceBImpl) private readonly serviceB: ServiceB,
     @Inject(LOGGER) private readonly logger: Console
   ) {}
 

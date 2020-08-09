@@ -20,6 +20,7 @@ import { Action } from './Action';
 import { NATS_PROTOCOL } from '../protocols';
 import { RpcHandler } from './RpcHandler';
 import * as nats from 'nats';
+import { ServiceNodeConfig } from './ServiceNodeConfig';
 
 @Registry([
   {
@@ -32,8 +33,13 @@ import * as nats from 'nats';
   },
 ])
 export class ServiceNode {
-  private config = {
-    protocol: Protocol.NATS,
+  private config: ServiceNodeConfig = {
+    protocol: {
+      type: Protocol.NATS,
+      json: true,
+      servers: ['nats://localhost:4222'],
+      timeout: 5000,
+    },
   };
 
   public constructor(
@@ -44,7 +50,8 @@ export class ServiceNode {
     }
   ) {}
 
-  public configure(config: any): this {
+  public configure(config: ServiceNodeConfig): this {
+    this.config = config;
     return this;
   }
 
@@ -83,7 +90,7 @@ export class ServiceNode {
 
     const service = subContainer.resolve(this.registry.entrypoint);
 
-    rpcHandler.createReplyHandler(service);
+    rpcHandler.registerReplySubscriptions(service);
 
     const registeredEffects: string[] =
       Reflect.getMetadata(EFFECT_METADATA_KEY, service) ?? [];

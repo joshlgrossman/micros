@@ -3,17 +3,18 @@ import {
   Service,
   Effect,
   MessageBroker,
-  Started,
   Method,
   Version,
-} from '../src/core';
-import { Inject } from '../src/di';
-import * as actions from './actions';
-import { LOGGER } from './logger';
+  Started,
+} from '../../src/core';
+import { Inject } from '../../src/di';
+import * as actions from '../actions';
+import { LOGGER } from '../logger';
+import { ServiceB } from './ServiceB';
 
 @Service()
 @Version(3)
-export class ServiceB implements Started {
+export class ServiceBImpl implements ServiceB, Started {
   @Effect()
   public readonly numberChanged = this.broker
     .subscribe(actions.NUMBER_CHANGED)

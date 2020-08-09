@@ -1,32 +1,29 @@
-// import 'reflect-metadata';
+import 'reflect-metadata';
 import { ServiceNode } from '../src/core';
-import { ServiceA } from './ServiceA';
-import { ServiceB } from './ServiceB';
+import { ServiceAImpl } from './serviceA/ServiceAImpl';
+import { ServiceBImpl } from './serviceB/ServiceBImpl';
 import { LoggerProvider } from './logger';
 
 new ServiceNode({
-  services: [ServiceA, ServiceB],
+  services: [ServiceAImpl, ServiceBImpl],
   providers: [LoggerProvider],
-  entrypoint: ServiceB,
+  entrypoint: ServiceBImpl,
 })
-  .configure({})
   .start()
   .catch(console.log);
 
 new ServiceNode({
-  services: [ServiceA, ServiceB],
+  services: [ServiceAImpl, ServiceBImpl],
   providers: [LoggerProvider],
-  entrypoint: ServiceB,
+  entrypoint: ServiceBImpl,
 })
-  .configure({})
   .start()
   .catch(console.log);
 
 new ServiceNode({
-  services: [ServiceA, ServiceB],
+  services: [ServiceAImpl, ServiceBImpl],
   providers: [LoggerProvider],
-  entrypoint: ServiceA,
+  entrypoint: ServiceAImpl,
 })
-  .configure({})
   .start()
   .catch(console.log);

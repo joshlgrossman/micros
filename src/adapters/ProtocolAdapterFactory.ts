@@ -6,7 +6,8 @@ import {
 } from '../di';
 import { ProtocolAdapter } from './ProtocolAdapter';
 import { Protocol } from './Protocol';
-import { NatsProtocolAdapter } from './NatsProtocolAdapter';
+import { NatsProtocolAdapter } from './nats/NatsProtocolAdapter';
+import { ProtocolAdapterConfig } from './ProtocolAdapterConfig';
 
 @Injectable()
 export class ProtocolAdapterFactory {
@@ -15,10 +16,10 @@ export class ProtocolAdapterFactory {
     private readonly container: DependencyContainer
   ) {}
 
-  public create(type: Protocol): ProtocolAdapter {
-    switch (type) {
+  public create(config: ProtocolAdapterConfig): ProtocolAdapter {
+    switch (config.type) {
       case Protocol.NATS:
-        return this.container.resolve(NatsProtocolAdapter);
+        return this.container.resolve(NatsProtocolAdapter).configure(config);
     }
   }
 }

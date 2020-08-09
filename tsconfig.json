@@ -17,5 +17,6 @@
     "outDir": "dist/",
     "rootDir": "."
   },
-  "include": ["./src/**/*", "./test/**/*", "./example/**/*"]
+  "include": ["./src/**/*", "./test/**/*", "./example/**/*"],
+  "exclude": ["./*.js"]
 }

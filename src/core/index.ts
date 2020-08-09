@@ -1,6 +1,7 @@
 export * from './Action';
 export * from './Effect';
 export * from './ServiceNode';
+export * from './ServiceNodeConfig';
 export * from './MessageBroker';
 export * from './Method';
 export * from './Service';

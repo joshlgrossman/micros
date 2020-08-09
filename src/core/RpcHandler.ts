@@ -1,16 +1,16 @@
-import { Inject, Injectable } from '../di';
+import { Inject, Singleton } from '../di';
 import { PROTOCOL_ADAPTER, ProtocolAdapter } from '../adapters';
 import { METHOD_METADATA_KEY, VERSION_METADATA_KEY } from '../internal';
 
-@Injectable()
+@Singleton()
 export class RpcHandler {
   constructor(
     @Inject(PROTOCOL_ADAPTER) private readonly protocol: ProtocolAdapter
   ) {}
 
-  public createRequestFacade<T extends new () => any & { prototype: Function }>(
-    service: T
-  ): T {
+  public createRequestFacade<
+    T extends new () => any & { prototype: (...args: any) => any }
+  >(service: T): T {
     const registeredMethods: string[] =
       Reflect.getMetadata(METHOD_METADATA_KEY, service.prototype) ?? [];
     const registeredVersion: number | string =
@@ -19,18 +19,19 @@ export class RpcHandler {
     const facade: any = {};
 
     for (const registeredMethod of registeredMethods) {
-      facade[registeredMethod] = (...args: any[]) => {
-        return this.protocol.request(
+      facade[registeredMethod] = (...args: any[]) =>
+        this.protocol.request(
           `v${registeredVersion}.${service.name}.${registeredMethod}`,
           args
         );
-      };
     }
 
     return facade;
   }
 
-  public createReplyHandler<T extends object>(service: T): void {
+  public registerReplySubscriptions<T extends Record<string, unknown>>(
+    service: T
+  ): void {
     const registeredMethods: string[] =
       Reflect.getMetadata(METHOD_METADATA_KEY, service.constructor.prototype) ??
       [];
@@ -41,7 +42,7 @@ export class RpcHandler {
       ) ?? 0;
 
     for (const registeredMethod of registeredMethods) {
-      this.protocol.respond(
+      this.protocol.reply(
         `v${registeredVersion}.${service.constructor.name}.${registeredMethod}`,
         (...args: any[]) => (service as any)[registeredMethod](...args)
       );
