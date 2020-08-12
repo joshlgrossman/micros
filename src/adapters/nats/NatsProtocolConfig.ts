@@ -5,4 +5,5 @@ export interface NatsProtocolConfig {
   json: boolean;
   servers: string[];
   timeout: number;
+  maxRetries: number;
 }

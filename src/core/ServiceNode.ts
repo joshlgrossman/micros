@@ -1,7 +1,8 @@
 import {
-  Constructor,
   container,
   EFFECT_METADATA_KEY,
+  VERSION_METADATA_KEY,
+  ON_START_METADATA_KEY,
   SERVICE_METADATA_KEY,
 } from '../internal';
 import {
@@ -38,15 +39,15 @@ export class ServiceNode {
       type: Protocol.NATS,
       json: true,
       servers: ['nats://localhost:4222'],
-      timeout: 5000,
+      timeout: 2000,
+      maxRetries: 0,
     },
   };
 
   public constructor(
     private readonly registry: {
-      services: Constructor<any>[];
       entrypoint: InjectionToken;
-      providers?: Provider<any>[];
+      dependencies?: Provider<any>[];
     }
   ) {}
 
@@ -62,33 +63,43 @@ export class ServiceNode {
 
     subContainer.register(PROTOCOL_ADAPTER, { useValue: protocolAdapter });
 
-    for (const provider of this.registry.providers ?? []) {
-      if (typeof provider === 'function') {
-        subContainer.register(provider, provider);
-      } else {
-        subContainer.register(provider.token, provider as any);
-      }
-    }
-
     await protocolAdapter.connect();
 
     const broker = subContainer.resolve(MessageBroker);
     const rpcHandler = subContainer.resolve(RpcHandler);
 
-    for (const service of this.registry.services) {
-      const serviceTokens: any[] =
-        Reflect.getMetadata(SERVICE_METADATA_KEY, service) ?? [];
+    for (const dependency of this.registry.dependencies ?? []) {
+      if (typeof dependency === 'function') {
+        if (Reflect.hasMetadata(SERVICE_METADATA_KEY, dependency)) {
+          const registeredVersion: number | string =
+            Reflect.getMetadata(VERSION_METADATA_KEY, dependency.prototype) ??
+            0;
 
-      if (!serviceTokens.includes(this.registry.entrypoint)) {
-        for (const token of serviceTokens) {
-          subContainer.register(token, {
-            useFactory: () => rpcHandler.createRequestFacade(service),
+          subContainer.register(dependency, {
+            useFactory: () =>
+              rpcHandler.createRequestFacade({
+                name: dependency.name,
+                version: registeredVersion,
+              }),
           });
+        } else {
+          subContainer.register(dependency, dependency);
         }
+      } else if ('useService' in dependency) {
+        subContainer.register(dependency.token, {
+          useFactory: () =>
+            rpcHandler.createRequestFacade(dependency.useService),
+        });
+      } else {
+        subContainer.register(dependency.token, dependency as any);
       }
     }
 
     const service = subContainer.resolve(this.registry.entrypoint);
+    const onStart: string = Reflect.getMetadata(
+      ON_START_METADATA_KEY,
+      service.constructor.prototype
+    );
 
     rpcHandler.registerReplySubscriptions(service);
 
@@ -103,6 +114,8 @@ export class ServiceNode {
       });
     }
 
-    await service.started?.();
+    if (onStart) {
+      await service[onStart]();
+    }
   }
 }

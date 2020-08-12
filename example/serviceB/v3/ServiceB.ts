@@ -5,16 +5,16 @@ import {
   MessageBroker,
   Method,
   Version,
-  Started,
-} from '../../src/core';
-import { Inject } from '../../src/di';
-import * as actions from '../actions';
-import { LOGGER } from '../logger';
-import { ServiceB } from './ServiceB';
+  OnStart,
+} from '../../../src/core';
+import { Inject } from '../../../src/di';
+import * as actions from '../../actions';
+import { LOGGER } from '../../logger';
+import { IServiceB } from './IServiceB';
 
 @Service()
 @Version(3)
-export class ServiceBImpl implements ServiceB, Started {
+export class ServiceB implements IServiceB {
   @Effect()
   public readonly numberChanged = this.broker
     .subscribe(actions.NUMBER_CHANGED)
@@ -28,6 +28,7 @@ export class ServiceBImpl implements ServiceB, Started {
     @Inject(LOGGER) private readonly logger: Console
   ) {}
 
+  @OnStart()
   public async started(): Promise<void> {
     this.logger.log('started b');
   }
@@ -41,6 +42,12 @@ export class ServiceBImpl implements ServiceB, Started {
 
   @Method()
   public async test2(num: number): Promise<number> {
+    this.logger.log('trying', num);
+
+    if (num > 2) {
+      throw new Error('failed');
+    }
+
     return num * 2;
   }
 }

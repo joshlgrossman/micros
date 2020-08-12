@@ -28,6 +28,7 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^6.6.2",
     "ts-node": "^8.10.2",
-    "tsyringe": "^4.3.0"
+    "tsyringe": "^4.3.0",
+    "uuid": "^8.3.0"
   }
 }

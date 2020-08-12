@@ -10,6 +10,6 @@ export type InternalClassDecorator<T> = (
 
 export type ActionTypes<A extends Action> = A['type'];
 
-export type ActionOfType<A extends Action, T extends string> = {
-  [key in A['type']]: A;
+export type ServiceFacade = {
+  [key: string]: (...args: any[]) => Promise<any>;
 };

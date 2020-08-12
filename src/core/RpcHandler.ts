@@ -1,6 +1,10 @@
 import { Inject, Singleton } from '../di';
 import { PROTOCOL_ADAPTER, ProtocolAdapter } from '../adapters';
-import { METHOD_METADATA_KEY, VERSION_METADATA_KEY } from '../internal';
+import {
+  METHOD_METADATA_KEY,
+  VERSION_METADATA_KEY,
+  ServiceFacade,
+} from '../internal';
 
 @Singleton()
 export class RpcHandler {
@@ -8,25 +12,22 @@ export class RpcHandler {
     @Inject(PROTOCOL_ADAPTER) private readonly protocol: ProtocolAdapter
   ) {}
 
-  public createRequestFacade<
-    T extends new () => any & { prototype: (...args: any) => any }
-  >(service: T): T {
-    const registeredMethods: string[] =
-      Reflect.getMetadata(METHOD_METADATA_KEY, service.prototype) ?? [];
-    const registeredVersion: number | string =
-      Reflect.getMetadata(VERSION_METADATA_KEY, service.prototype) ?? 0;
-
-    const facade: any = {};
-
-    for (const registeredMethod of registeredMethods) {
-      facade[registeredMethod] = (...args: any[]) =>
-        this.protocol.request(
-          `v${registeredVersion}.${service.name}.${registeredMethod}`,
-          args
-        );
-    }
-
-    return facade;
+  public createRequestFacade(serviceIdentifier: {
+    name: string;
+    version: number | string;
+  }): ServiceFacade {
+    return new Proxy(
+      {},
+      {
+        get: (target, property) => (...args: any[]) =>
+          this.protocol.request(
+            `${serviceIdentifier.name}.v${serviceIdentifier.version}.${String(
+              property
+            )}`,
+            args
+          ),
+      }
+    );
   }
 
   public registerReplySubscriptions<T extends Record<string, unknown>>(
@@ -35,15 +36,13 @@ export class RpcHandler {
     const registeredMethods: string[] =
       Reflect.getMetadata(METHOD_METADATA_KEY, service.constructor.prototype) ??
       [];
+
     const registeredVersion: number | string =
-      Reflect.getMetadata(
-        VERSION_METADATA_KEY,
-        service.constructor.prototype
-      ) ?? 0;
+      Reflect.getMetadata(VERSION_METADATA_KEY, service.constructor) ?? 0;
 
     for (const registeredMethod of registeredMethods) {
       this.protocol.reply(
-        `v${registeredVersion}.${service.constructor.name}.${registeredMethod}`,
+        `${service.constructor.name}.v${registeredVersion}.${registeredMethod}`,
         (...args: any[]) => (service as any)[registeredMethod](...args)
       );
     }

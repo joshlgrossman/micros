@@ -4,18 +4,18 @@ import {
   Effect,
   MessageBroker,
   Version,
-  Started,
-} from '../../src/core';
-import { Inject } from '../../src/di';
-import * as actions from '../actions';
-import { LOGGER } from '../logger';
-import { ServiceA } from './ServiceA';
-import { ServiceBImpl } from '../serviceB/ServiceBImpl';
-import { ServiceB } from '../serviceB/ServiceB';
+  OnStart,
+} from '../../../src/core';
+import { Inject } from '../../../src/di';
+import * as actions from '../../actions';
+import { LOGGER } from '../../logger';
+import { IServiceA } from './IServiceA';
+import { IServiceB } from '../../serviceB/v3/IServiceB';
+import { SERVICE_B } from './providers';
 
 @Service()
 @Version(1)
-export class ServiceAImpl implements ServiceA, Started {
+export class ServiceA implements IServiceA {
   private number = 10;
 
   @Effect()
@@ -34,16 +34,23 @@ export class ServiceAImpl implements ServiceA, Started {
 
   constructor(
     @Inject(MessageBroker) private readonly broker: MessageBroker<actions.All>,
-    @Inject(ServiceBImpl) private readonly serviceB: ServiceB,
+    @Inject(SERVICE_B) private readonly serviceB: IServiceB,
     @Inject(LOGGER) private readonly logger: Console
   ) {}
 
+  @OnStart()
   public async started(): Promise<void> {
     this.logger.log('started');
     setTimeout(async () => {
-      const result = await this.serviceB.test('hello', 'world');
-      const result2 = await this.serviceB.test2(123);
-      this.logger.log('result is ', result + result2);
+      // const result = await this.serviceB.test('hello', 'world');
+      const result = await this.serviceB.test2(2);
+      try {
+        const result2 = await this.serviceB.test2(5);
+
+        this.logger.log('result is ', result + result2);
+      } catch (err) {
+        this.logger.log('got err', err);
+      }
     }, 1000);
   }
 }

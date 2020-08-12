@@ -4,6 +4,7 @@ import { Inject, Singleton } from '../../di';
 import { NATS_PROTOCOL, nats } from '../../protocols';
 import { Action } from '../../core';
 import { NatsProtocolConfig } from './NatsProtocolConfig';
+import { serializeError } from '../../internal';
 
 @Singleton()
 export class NatsProtocolAdapter implements ProtocolAdapter {
@@ -26,9 +27,38 @@ export class NatsProtocolAdapter implements ProtocolAdapter {
   }
 
   public async request(method: string, args: any[]): Promise<any> {
-    return new Promise((res) =>
-      this.connection.requestOne(method, args, this.config.timeout, res)
-    );
+    for (let i = this.config.maxRetries; i >= 0; i--) {
+      try {
+        return await new Promise((res, rej) => {
+          this.connection.requestOne(
+            method,
+            args,
+            this.config.timeout,
+            (msg: any) => {
+              if (msg instanceof nats.NatsError) {
+                rej(msg);
+                return;
+              }
+
+              const [err, result] = msg;
+
+              if (err) {
+                rej(err);
+              } else {
+                res(result);
+              }
+            }
+          );
+        });
+      } catch (err) {
+        if (
+          i === 0 ||
+          !(err instanceof nats.NatsError && err.code === nats.REQ_TIMEOUT)
+        ) {
+          throw err;
+        }
+      }
+    }
   }
 
   public reply(method: string, cb: (...args: any[]) => Promise<any>): void {
@@ -36,8 +66,12 @@ export class NatsProtocolAdapter implements ProtocolAdapter {
       method,
       { queue: method },
       async (args: any[], replyTo: string) => {
-        const response = await cb(...args);
-        this.connection.publish(replyTo, response);
+        try {
+          const response = await cb(...args);
+          this.connection.publish(replyTo, [undefined, response]);
+        } catch (err) {
+          this.connection.publish(replyTo, [serializeError(err)]);
+        }
       }
     );
   }

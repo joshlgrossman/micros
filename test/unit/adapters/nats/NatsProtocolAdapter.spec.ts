@@ -25,6 +25,7 @@ describe('NatsProtocolAdapter', () => {
       type: Protocol.NATS,
       json: true,
       timeout: 1337,
+      maxRetries: 0,
       servers: ['hello.world'],
     });
   });

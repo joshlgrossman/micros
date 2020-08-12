@@ -1,21 +1,9 @@
-import { InjectionToken, Injectable } from '../di';
-import {
-  container,
-  InternalClassDecorator,
-  SERVICE_METADATA_KEY,
-} from '../internal';
+import { Injectable } from '../di';
+import { InternalClassDecorator, SERVICE_METADATA_KEY } from '../internal';
 
-export function Service<T = any>(
-  token?: InjectionToken<T>
-): InternalClassDecorator<T> {
+export function Service<T = any>(): InternalClassDecorator<T> {
   return (target) => {
-    Reflect.defineMetadata(
-      SERVICE_METADATA_KEY,
-      [token ?? target.name, target],
-      target
-    );
-
-    container.register(token ?? target.name, { useClass: target });
+    Reflect.defineMetadata(SERVICE_METADATA_KEY, true, target);
     return Injectable()(target);
   };
 }
