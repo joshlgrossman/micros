@@ -4,13 +4,9 @@ import {
   VERSION_METADATA_KEY,
   ON_START_METADATA_KEY,
   SERVICE_METADATA_KEY,
+  Constructor,
 } from '../internal';
-import {
-  Provider,
-  InjectionToken,
-  DEPENDENCY_CONTAINER,
-  Registry,
-} from '../di';
+import { Provider, DEPENDENCY_CONTAINER, Registry } from '../di';
 import {
   Protocol,
   ProtocolAdapterFactory,
@@ -46,7 +42,7 @@ export class ServiceNode {
 
   public constructor(
     private readonly registry: {
-      entrypoint: InjectionToken;
+      entrypoints: Constructor<any>[];
       dependencies?: Provider<any>[];
     }
   ) {}
@@ -95,27 +91,32 @@ export class ServiceNode {
       }
     }
 
-    const service = subContainer.resolve(this.registry.entrypoint);
-    const onStart: string = Reflect.getMetadata(
-      ON_START_METADATA_KEY,
-      service.constructor.prototype
-    );
+    const onStartPromises = [];
+    for (const entrypoint of this.registry.entrypoints) {
+      const service = subContainer.resolve(entrypoint);
+      const onStart: string = Reflect.getMetadata(
+        ON_START_METADATA_KEY,
+        service.constructor.prototype
+      );
 
-    rpcHandler.registerReplySubscriptions(service);
+      rpcHandler.registerReplySubscriptions(service);
 
-    const registeredEffects: string[] =
-      Reflect.getMetadata(EFFECT_METADATA_KEY, service) ?? [];
+      const registeredEffects: string[] =
+        Reflect.getMetadata(EFFECT_METADATA_KEY, service) ?? [];
 
-    for (const registeredEffect of registeredEffects) {
-      service[registeredEffect].subscribe((action: Action) => {
-        if (action) {
-          broker.dispatch(action);
-        }
-      });
+      for (const registeredEffect of registeredEffects) {
+        service[registeredEffect].subscribe((action: Action) => {
+          if (action) {
+            broker.dispatch(action);
+          }
+        });
+      }
+
+      if (onStart) {
+        onStartPromises.push(service[onStart]());
+      }
     }
 
-    if (onStart) {
-      await service[onStart]();
-    }
+    await Promise.all(onStartPromises);
   }
 }

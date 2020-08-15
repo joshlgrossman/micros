@@ -4,6 +4,6 @@ import { ServiceNode } from '../../../src/core';
 import { ServiceBProvider } from './providers';
 
 export default new ServiceNode({
-  entrypoint: ServiceA,
+  entrypoints: [ServiceA],
   dependencies: [LoggerProvider, ServiceBProvider],
 });
