@@ -25,7 +25,7 @@ describe('NatsProtocolAdapter', () => {
       type: Protocol.NATS,
       json: true,
       timeout: 1337,
-      maxRetries: 0,
+      maxRetries: 3,
       servers: ['hello.world'],
     });
   });
@@ -62,16 +62,16 @@ describe('NatsProtocolAdapter', () => {
   describe('request', () => {
     beforeEach(async () => {
       client.requestOne.mockImplementation((method, args, timeout, cb) =>
-        (cb as any)('some response')
+        (cb as any)([null, 'some response'])
       );
 
       await adapter.connect();
     });
 
     it('should create a request with the args', async () => {
-      await adapter.request('v0.SomeService.someMethod', ['hello', 'world']);
+      await adapter.request('someMethod', ['hello', 'world']);
       expect(client.requestOne).toBeCalledWith(
-        'v0.SomeService.someMethod',
+        'someMethod',
         ['hello', 'world'],
         1337,
         expect.any(Function)
@@ -79,9 +79,41 @@ describe('NatsProtocolAdapter', () => {
     });
 
     it('should resolve to the response', async () => {
-      expect(
-        await adapter.request('v0.SomeService.someMethod', ['hello', 'world'])
-      ).toEqual('some response');
+      expect(await adapter.request('someMethod', ['hello', 'world'])).toEqual(
+        'some response'
+      );
+    });
+
+    describe('when the request times out', () => {
+      beforeEach(async () => {
+        client.requestOne.mockImplementation((method, args, timeout, cb) =>
+          (cb as any)(new nats.NatsError('failed', nats.REQ_TIMEOUT))
+        );
+
+        await adapter.connect();
+      });
+
+      it('should retry the configured number of times', async () => {
+        await expect(adapter.request('someMethod', ['test'])).rejects.toThrow();
+
+        expect(client.requestOne).toBeCalledTimes(4);
+      });
+    });
+
+    describe('when the request fails', () => {
+      beforeEach(async () => {
+        client.requestOne.mockImplementation((method, args, timeout, cb) =>
+          (cb as any)([new Error('failed')])
+        );
+
+        await adapter.connect();
+      });
+
+      it('should throw the error', async () => {
+        await expect(adapter.request('someMethod', ['test'])).rejects.toThrow(
+          new Error('failed')
+        );
+      });
     });
   });
 
@@ -99,26 +131,39 @@ describe('NatsProtocolAdapter', () => {
     });
 
     it('should subscribe to the method', () => {
-      adapter.reply('v1.BlahService.sayHello', callback);
+      adapter.reply('someMethod', callback);
       expect(client.subscribe).toBeCalledWith(
-        'v1.BlahService.sayHello',
-        { queue: 'v1.BlahService.sayHello' },
+        'someMethod',
+        { queue: 'someMethod' },
         expect.any(Function)
       );
     });
 
     it('should call the callback when message published', async () => {
-      adapter.reply('v1.BlahService.sayHello', callback);
+      adapter.reply('someMethod', callback);
       await subscriptionCallback(['what', 'up'], 'some-unique-subject');
 
       expect(callback).toBeCalledWith('what', 'up');
     });
 
     it('should publish the response to the reply subject', async () => {
-      adapter.reply('v1.BlahService.sayHello', callback);
+      adapter.reply('someMethod', callback);
       await subscriptionCallback([], 'some-unique-subject');
 
-      expect(client.publish).toBeCalledWith('some-unique-subject', 'hello');
+      expect(client.publish).toBeCalledWith('some-unique-subject', [
+        undefined,
+        'hello',
+      ]);
+    });
+
+    it('should publish a serialized error', async () => {
+      callback = jest.fn(() => Promise.reject(new Error('failed')));
+      adapter.reply('someMethod', callback);
+      await subscriptionCallback([], 'some-unique-subject');
+
+      expect(client.publish).toBeCalledWith('some-unique-subject', [
+        { message: 'failed', name: 'Error' },
+      ]);
     });
   });
 
